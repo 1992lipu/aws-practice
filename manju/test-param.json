@@ -1,0 +1,30 @@
+[
+{
+    "ParameterKey": "KeyName",
+    "ParameterValue": "Manju"
+},
+{
+    "ParameterKey": "Port",
+    "ParameterValue": "8080"
+},
+{
+    "ParameterKey": "VPC",
+    "ParameterValue": "vpc-b4f566dc"
+},
+{
+    "ParameterKey": "Subnet",
+    "ParameterValue": "subnet-9f4183e5"
+},
+{
+    "ParameterKey": "EurekaAMI",
+    "ParameterValue": "ami-a43c0cc1"
+},
+{
+    "ParameterKey": "InstanceType",
+    "ParameterValue": "t2.micro"
+},
+{
+    "ParameterKey": "Environment",
+    "ParameterValue": "DEV"
+}
+]

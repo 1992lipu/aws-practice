@@ -1,0 +1,234 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "sample template to create a node",
+    "Parameters": {
+        "Port": {
+            "Description": "Security group port",
+            "Type": "String"
+        },
+        "VPC": {
+            "Description": "A VPC to launch the spinnaker instance in.",
+            "Type": "AWS::EC2::VPC::Id"
+        },
+        "Subnet": {
+            "Description": "subnet to attach network interface to",
+            "Type": "AWS::EC2::Subnet::Id"
+        },
+        "KeyName": {
+            "Type": "String"
+        },
+        "EurekaAMI": {
+            "Description": "AMI Id of the bake image with eureka and tomcat",
+            "Type": "AWS::EC2::Image::Id"
+        },
+        "InstanceType": {
+            "Description": "InstanceType for the Eureka Node",
+            "Type": "String"
+        },
+        "Environment": {
+            "Description": "Environment tag",
+            "Type": "String"
+        }
+    },
+    "Resources": {
+        "SecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "service-security-group",
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": {
+                            "Ref": "Port"
+                        },
+                        "ToPort": {
+                            "Ref": "Port"
+                        },
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": "22",
+                        "IpProtocol": "tcp",
+                        "ToPort": "22"
+                    }
+                ]
+            }
+        },
+        "EurekaENI": {
+            "Type": "AWS::EC2::NetworkInterface",
+            "Properties": {
+                "SourceDestCheck": "false",
+                "GroupSet": [
+                    {
+                        "Ref": "SecurityGroup"
+                    }
+                ],
+                "SubnetId": {
+                    "Ref": "Subnet"
+                }
+            }
+        },
+        "EurekaInstance": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "InstanceType": {
+                    "Ref": "InstanceType"
+                },
+                "IamInstanceProfile": {
+                    "Ref": "InstanceProfile"
+                },
+                "ImageId": {
+                    "Ref": "EurekaAMI"
+                },
+                "KeyName": {
+                    "Ref": "KeyName"
+                },
+                "Tags": [
+                    {
+                        "Key": "tr:financial-identifier",
+                        "Value": "450014377"
+                    },
+                    {
+                        "Key": "tr:environment-type",
+                        "Value": "DEV"
+                    },
+                    {
+                        "Key": "tr:application-asset-insight-id",
+                        "Value": "204257"
+                    }
+                ],
+                "NetworkInterfaces": [
+                    {
+                        "NetworkInterfaceId": {
+                            "Ref": "EurekaENI"
+                        },
+                        "DeviceIndex": "0"
+                    }
+                ],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "#!/bin/bash -xe\n",
+                                "sudo sh /home/ec2-user/start-filebeat.sh --logstash osrnonprod-logstash-elb\n",
+                                "o=\"   -Deureka.datacenter=cloud\"\n",
+                                "o=\"$o -Deureka.region=us-east-1\"\n",
+                                "o=\"$o -Deureka.enableSelfPreservation=false\"\n",
+                                "o=\"$o -Deureka.serviceUrl.default=http://\"",
+                                "$(curl http://169.254.169.254/latest/meta-data/local-ipv4)",
+                                ":8080/eureka/v2/ \n",
+                                "sed -i \"\\$aJAVA_OPTS=\\\"$o\\\" \" \/usr\/share\/tomcat8\/conf\/tomcat8.conf\n",
+                                "\n",
+                                "service tomcat8 restart\n"
+                            ]
+                        ]
+                    }
+                }
+            }
+        },
+        "EurekaRecoveryAlarm": {
+            "Type": "AWS::CloudWatch::Alarm",
+            "Properties": {
+                "AlarmDescription": "Trigger a recovery when instance status check fails for 5 consecutive minutes.",
+                "Namespace": "AWS/EC2",
+                "MetricName": "StatusCheckFailed_System",
+                "Statistic": "Minimum",
+                "Period": "60",
+                "EvaluationPeriods": "5",
+                "ComparisonOperator": "GreaterThanThreshold",
+                "Threshold": "0",
+                "AlarmActions": [
+                    {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "arn:aws:automate:",
+                                {
+                                    "Ref": "AWS::Region"
+                                },
+                                ":ec2:recover"
+                            ]
+                        ]
+                    }
+                ],
+                "Dimensions": [
+                    {
+                        "Name": "InstanceId",
+                        "Value": {
+                            "Ref": "EurekaInstance"
+                        }
+                    }
+                ]
+            }
+        },
+        "InstanceProfile": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Path": "/",
+                "Roles": [
+                    {
+                        "Ref": "EC2Role"
+                    }
+                ]
+            }
+        },
+        "EC2Role": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "ec2.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyName": "eureka",
+                        "PolicyDocument": {
+                            "Statement": [
+                                {
+                                    "Action": [
+                                        "logs:CreateLogGroup",
+                                        "logs:CreateLogStream",
+                                        "logs:PutLogEvents",
+                                        "logs:DescribeLogStreams",
+                                        "logs:DescribeLogGroups"
+                                    ],
+                                    "Resource": "arn:aws:logs:*:*:*",
+                                    "Effect": "Allow"
+                                },
+                                {
+                                    "Action": [
+                                        "cloudwatch:PutMetricData",
+                                        "elasticloadbalancing:DescribeLoadBalancers",
+                                        "elasticache:DescribeCacheClusters",
+                                        "ec2:DescribeTags",
+                                        "ssm:ListAssociations"
+                                    ],
+                                    "Resource": "*",
+                                    "Effect": "Allow"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    "Outputs": {}
+}
