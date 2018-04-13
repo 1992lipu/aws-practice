@@ -1,6 +1,6 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "sample template to create a node",
+    "Description": "sampl template to create a node",
     "Parameters": {
         "Port": {
             "Description": "Security group port",
