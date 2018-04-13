@@ -1,6 +1,6 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "Nested Templated in order to create a Eureka node",
+    "Description": "Nested Templated in order to create a Docker node",
     "Parameters": {
         "Port": {
             "Description": "Security group port",
@@ -18,7 +18,7 @@
             "Type": "String"
         },
         "DockerAMI": {
-            "Description": "AMI Id of the bake image with eureka and tomcat",
+            "Description": "AMI Id of the bake image with docker and tomcat",
             "Type": "AWS::EC2::Image::Id"
         },
         "InstanceType": {
