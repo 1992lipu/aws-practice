@@ -1,0 +1,30 @@
+[
+    {
+        "ParameterKey": "KeyName",
+        "ParameterValue": "Somuya"
+    },
+    {
+        "ParameterKey": "Port",
+        "ParameterValue": "8080"
+    },
+    {
+        "ParameterKey": "VPC",
+        "ParameterValue": "vpc-4b811c23"
+    },
+    {
+        "ParameterKey": "Subnet",
+        "ParameterValue": "subnet-5c04c826"
+    },
+    {
+        "ParameterKey": "EurekaAMI",
+        "ParameterValue": "ami-25615740"
+    },
+    {
+        "ParameterKey": "InstanceType",
+        "ParameterValue": "t2.micro"
+    },
+    {
+        "ParameterKey": "Environment",
+        "ParameterValue": "DEV"
+    }
+]
