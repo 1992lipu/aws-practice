@@ -22,7 +22,7 @@
             "Type": "AWS::EC2::Image::Id"
         },
         "InstanceType": {
-            "Description": "InstanceType for the Eureka Node",
+            "Description": "InstanceType for the Docker Node",
             "Type": "String"
         },
         "Environment": {
