@@ -1,0 +1,20 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "The AWS S3 CloudFormation template for this Serverless application",
+    "Resources": {
+        "MyBucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+                "BucketName": "soumya-test-api-model-version-dev",
+                "AccessControl": "PublicRead"
+            }
+        }
+    },
+    "Outputs": {
+        "MyBucketName": {
+            "Value": {
+                "Ref": "MyBucket"
+            }
+        }
+    }
+}
