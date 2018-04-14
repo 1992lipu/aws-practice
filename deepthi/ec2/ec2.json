@@ -1,0 +1,214 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Nested Templated in order to create a Docker node",
+    "Parameters": {
+        "Port": {
+            "Description": "Security group port",
+            "Type": "String"
+        },
+        "VPC": {
+            "Description": "A VPC to launch the spinnaker instance in.",
+            "Type": "AWS::EC2::VPC::Id"
+        },
+        "Subnet": {
+            "Description": "subnet to attach network interface to",
+            "Type": "AWS::EC2::Subnet::Id"
+        },
+        "KeyName": {
+            "Type": "String"
+        },
+        "DockerAMI": {
+            "Description": "AMI Id of the bake image with docker and tomcat",
+            "Type": "AWS::EC2::Image::Id"
+        },
+        "InstanceType": {
+            "Description": "InstanceType for the Eureka Node",
+            "Type": "String"
+        },
+        "Environment": {
+            "Description": "Environment tag",
+            "Type": "String"
+        }
+    },
+    "Resources": {
+        "SecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "service-security-group",
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": {
+                            "Ref": "Port"
+                        },
+                        "ToPort": {
+                            "Ref": "Port"
+                        },
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": "22",
+                        "IpProtocol": "tcp",
+                        "ToPort": "22"
+                    }
+                ]
+            }
+        },
+        "DockerENI": {
+            "Type": "AWS::EC2::NetworkInterface",
+            "Properties": {
+                "SourceDestCheck": "false",
+                "GroupSet": [
+                    {
+                        "Ref": "SecurityGroup"
+                    }
+                ],
+                "SubnetId": {
+                    "Ref": "Subnet"
+                }
+            }
+        },
+        "DockerInstance": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "InstanceType": {
+                    "Ref": "InstanceType"
+                },
+                "IamInstanceProfile": {
+                    "Ref": "InstanceProfile"
+                },
+                "ImageId": {
+                    "Ref": "DockerAMI"
+                },
+                "KeyName": {
+                    "Ref": "KeyName"
+                },
+                "Tags": [
+                    {
+                        "Key": "tr:financial-identifier",
+                        "Value": "450014377"
+                    },
+                    {
+                        "Key": "tr:environment-type",
+                        "Value": "DEV"
+                    },
+                    {
+                        "Key": "tr:application-asset-insight-id",
+                        "Value": "204257"
+                    }
+                ],
+                "NetworkInterfaces": [
+                    {
+                        "NetworkInterfaceId": {
+                            "Ref": "DockerENI"
+                        },
+                        "DeviceIndex": "0"
+                    }
+                ]
+            }
+        },
+        "DockerRecoveryAlarm": {
+            "Type": "AWS::CloudWatch::Alarm",
+            "Properties": {
+                "AlarmDescription": "Trigger a recovery when instance status check fails for 5 consecutive minutes.",
+                "Namespace": "AWS/EC2",
+                "MetricName": "StatusCheckFailed_System",
+                "Statistic": "Minimum",
+                "Period": "60",
+                "EvaluationPeriods": "5",
+                "ComparisonOperator": "GreaterThanThreshold",
+                "Threshold": "0",
+                "AlarmActions": [
+                    {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "arn:aws:automate:",
+                                {
+                                    "Ref": "AWS::Region"
+                                },
+                                ":ec2:recover"
+                            ]
+                        ]
+                    }
+                ],
+                "Dimensions": [
+                    {
+                        "Name": "InstanceId",
+                        "Value": {
+                            "Ref": "DockerInstance"
+                        }
+                    }
+                ]
+            }
+        },
+        "InstanceProfile": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Path": "/",
+                "Roles": [
+                    {
+                        "Ref": "EC2Role"
+                    }
+                ]
+            }
+        },
+        "EC2Role": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "ec2.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyName": "eureka",
+                        "PolicyDocument": {
+                            "Statement": [
+                                {
+                                    "Action": [
+                                        "logs:CreateLogGroup",
+                                        "logs:CreateLogStream",
+                                        "logs:PutLogEvents",
+                                        "logs:DescribeLogStreams",
+                                        "logs:DescribeLogGroups"
+                                    ],
+                                    "Resource": "arn:aws:logs:*:*:*",
+                                    "Effect": "Allow"
+                                },
+                                {
+                                    "Action": [
+                                        "cloudwatch:PutMetricData",
+                                        "elasticloadbalancing:DescribeLoadBalancers",
+                                        "elasticache:DescribeCacheClusters",
+                                        "ec2:DescribeTags",
+                                        "ssm:ListAssociations"
+                                    ],
+                                    "Resource": "*",
+                                    "Effect": "Allow"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    "Outputs": {}
+}

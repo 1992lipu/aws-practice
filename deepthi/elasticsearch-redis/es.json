@@ -1,0 +1,356 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "AWS CloudFormation template to create elastic search resources",
+    "Mappings": {},
+    "Parameters": {
+        "NodeInstanceType": {
+            "Type": "String",
+            "Default": "cache.t2.small"
+        },
+        "SubnetGroup": {
+            "Type": "String",
+            "Default": "analy-redis-4l9kohoa4a7g"
+        },
+        "ClusterSize": {
+            "Type": "String",
+            "Default": "1"
+        },
+        "Port": {
+            "Type": "String",
+            "Default": "6379"
+        },
+        "VPC": {
+            "Type": "AWS::EC2::VPC::Id",
+            "Default": "vpc-72470015"
+        }
+    },
+    "Conditions": {},
+    "Resources": {
+        "EtrElasticsearchDomain": {
+            "Type": "AWS::Elasticsearch::Domain",
+            "Properties": {
+                "ElasticsearchClusterConfig": {
+                    "DedicatedMasterEnabled": "true",
+                    "InstanceCount": "2",
+                    "ZoneAwarenessEnabled": "true",
+                    "InstanceType": "m3.medium.elasticsearch",
+                    "DedicatedMasterType": "m3.medium.elasticsearch",
+                    "DedicatedMasterCount": "3"
+                },
+                "ElasticsearchVersion": "2.3",
+                "EBSOptions": {
+                    "EBSEnabled": true,
+                    "Iops": 0,
+                    "VolumeSize": 20,
+                    "VolumeType": "gp2"
+                },
+                "SnapshotOptions": {
+                    "AutomatedSnapshotStartHour": "0"
+                },
+                "AccessPolicies": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "AWS": "*"
+                            },
+                            "Action": "es:*",
+                            "Resource": "*",
+                            "Condition": {
+                                "IpAddress": {
+                                    "aws:SourceIp": [
+                                        "10.0.0.0/8",
+                                        "84.18.160.0/19",
+                                        "159.42.0.0/16",
+                                        "159.220.0.0/16",
+                                        "163.231.0.0/16",
+                                        "164.57.0.0/16",
+                                        "167.68.0.0/16",
+                                        "192.165.208.0/20",
+                                        "198.80.128.0/18",
+                                        "198.179.137.0/24",
+                                        "199.224.128.0/17",
+                                        "203.191.132.0/24",
+                                        "54.86.69.243",
+                                        "54.86.71.11"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                "AdvancedOptions": {
+                    "rest.action.multi.allow_explicit_index": "true"
+                },
+                "DomainName": "analytics-dev-etr"
+            }
+        },
+        "PeersElasticsearchDomain": {
+            "Type": "AWS::Elasticsearch::Domain",
+            "Properties": {
+                "ElasticsearchClusterConfig": {
+                    "DedicatedMasterEnabled": "true",
+                    "InstanceCount": "2",
+                    "ZoneAwarenessEnabled": "true",
+                    "InstanceType": "m3.medium.elasticsearch",
+                    "DedicatedMasterType": "m3.medium.elasticsearch",
+                    "DedicatedMasterCount": "3"
+                },
+                "DomainName": "analytics-dev-peers",
+                "ElasticsearchVersion": "2.3",
+                "EBSOptions": {
+                    "EBSEnabled": true,
+                    "Iops": 0,
+                    "VolumeSize": 20,
+                    "VolumeType": "gp2"
+                },
+                "SnapshotOptions": {
+                    "AutomatedSnapshotStartHour": "0"
+                },
+                "AccessPolicies": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "AWS": "*"
+                            },
+                            "Action": "es:*",
+                            "Resource": "*",
+                            "Condition": {
+                                "IpAddress": {
+                                    "aws:SourceIp": [
+                                        "10.0.0.0/8",
+                                        "84.18.160.0/19",
+                                        "159.42.0.0/16",
+                                        "159.220.0.0/16",
+                                        "163.231.0.0/16",
+                                        "164.57.0.0/16",
+                                        "167.68.0.0/16",
+                                        "192.165.208.0/20",
+                                        "198.80.128.0/18",
+                                        "198.179.137.0/24",
+                                        "199.224.128.0/17",
+                                        "203.191.132.0/24",
+                                        "54.86.69.243",
+                                        "54.86.71.11"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                "AdvancedOptions": {
+                    "rest.action.multi.allow_explicit_index": "true"
+                }
+            }
+        },
+        "LoggingElasticsearchDomain": {
+            "Type": "AWS::Elasticsearch::Domain",
+            "Properties": {
+                "ElasticsearchClusterConfig": {
+                    "DedicatedMasterEnabled": "true",
+                    "InstanceCount": "2",
+                    "ZoneAwarenessEnabled": "true",
+                    "InstanceType": "m3.medium.elasticsearch",
+                    "DedicatedMasterType": "m3.medium.elasticsearch",
+                    "DedicatedMasterCount": "3"
+                },
+                "ElasticsearchVersion": "2.3",
+                "DomainName": "analytics-dev-logging",
+                "EBSOptions": {
+                    "EBSEnabled": true,
+                    "Iops": 0,
+                    "VolumeSize": 20,
+                    "VolumeType": "gp2"
+                },
+                "SnapshotOptions": {
+                    "AutomatedSnapshotStartHour": "0"
+                },
+                "AccessPolicies": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "AWS": "*"
+                            },
+                            "Action": "es:*",
+                            "Resource": "*",
+                            "Condition": {
+                                "IpAddress": {
+                                    "aws:SourceIp": [
+                                        "10.0.0.0/8",
+                                        "84.18.160.0/19",
+                                        "159.42.0.0/16",
+                                        "159.220.0.0/16",
+                                        "163.231.0.0/16",
+                                        "164.57.0.0/16",
+                                        "167.68.0.0/16",
+                                        "192.165.208.0/20",
+                                        "198.80.128.0/18",
+                                        "198.179.137.0/24",
+                                        "199.224.128.0/17",
+                                        "203.191.132.0/24",
+                                        "54.86.69.243",
+                                        "54.86.71.11"
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                },
+                "AdvancedOptions": {
+                    "rest.action.multi.allow_explicit_index": "true"
+                }
+            }
+        },
+        "SecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "redis-security-group",
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": {
+                            "Ref": "Port"
+                        },
+                        "ToPort": {
+                            "Ref": "Port"
+                        },
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": "22",
+                        "IpProtocol": "tcp",
+                        "ToPort": "22"
+                    }
+                ]
+            }
+        },
+        "EtrRedisInstance": {
+            "Type": "AWS::ElastiCache::CacheCluster",
+            "Properties": {
+                "CacheNodeType": {
+                    "Ref": "NodeInstanceType"
+                },
+                "CacheSubnetGroupName": {
+                    "Ref": "SubnetGroup"
+                },
+                "Engine": "redis",
+                "NumCacheNodes": {
+                    "Ref": "ClusterSize"
+                },
+                "Port": {
+                    "Ref": "Port"
+                },
+                "VpcSecurityGroupIds": [
+                    {
+                        "Ref": "SecurityGroup"
+                    }
+                ]
+            }
+        },
+        "PeersRedisInstance": {
+            "Type": "AWS::ElastiCache::CacheCluster",
+            "Properties": {
+                "CacheNodeType": {
+                    "Ref": "NodeInstanceType"
+                },
+                "CacheSubnetGroupName": {
+                    "Ref": "SubnetGroup"
+                },
+                "Engine": "redis",
+                "NumCacheNodes": {
+                    "Ref": "ClusterSize"
+                },
+                "Port": {
+                    "Ref": "Port"
+                },
+                "VpcSecurityGroupIds": [
+                    {
+                        "Ref": "SecurityGroup"
+                    }
+                ]
+            }
+        }
+    },
+    "Outputs": {
+        "EtrESDomainEndpoint": {
+            "Description": "DomainEndpoint for ETR DEV Elasticsearch cluster",
+            "Value": {
+                "Fn::GetAtt": [
+                    "EtrElasticsearchDomain",
+                    "DomainEndpoint"
+                ]
+            },
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-EtrESDomainEndpoint"
+                }
+            }
+        },
+        "PeersESDomainEndpoint": {
+            "Description": "DomainEndpoint for Peers DEV Elasticsearch cluster",
+            "Value": {
+                "Fn::GetAtt": [
+                    "PeersElasticsearchDomain",
+                    "DomainEndpoint"
+                ]
+            },
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-PeersESDomainEndpoint"
+                }
+            }
+        },
+        "LoggingESDomainEndpoint": {
+            "Description": "DomainEndpoint for logging Elasticsearch cluster",
+            "Value": {
+                "Fn::GetAtt": [
+                    "LoggingElasticsearchDomain",
+                    "DomainEndpoint"
+                ]
+            },
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-LoggingESDomainEndpoint"
+                }
+            }
+        },
+        "ETRRedisAddress": {
+            "Description": "DomainEndpoint for ETR redis cluster",
+            "Value": {
+                "Fn::GetAtt": [
+                    "EtrRedisInstance",
+                    "RedisEndpoint.Address"
+                ]
+            },
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-ETRRedisAddress"
+                }
+            }
+        },
+        "PeersRedisAddress": {
+            "Description": "DomainEndpoint for Peers redis cluster",
+            "Value": {
+                "Fn::GetAtt": [
+                    "PeersRedisInstance",
+                    "RedisEndpoint.Address"
+                ]
+            },
+            "Export": {
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}-PeersRedisAddress"
+                }
+            }
+            
+        }
+    }
+}

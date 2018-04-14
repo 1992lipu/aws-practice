@@ -1,0 +1,30 @@
+[
+    {
+        "ParameterKey": "KeyName",
+        "ParameterValue": "DeepthiKey"
+    },
+    {
+        "ParameterKey": "Port",
+        "ParameterValue": "8080"
+    },
+    {
+        "ParameterKey": "VPC",
+        "ParameterValue": "vpc-54e1733c"
+    },
+    {
+        "ParameterKey": "Subnet",
+        "ParameterValue": "subnet-a21b8eca"
+    },
+    {
+        "ParameterKey": "DockerAMI",
+        "ParameterValue": "ami-25615740"
+    },
+    {
+        "ParameterKey": "InstanceType",
+        "ParameterValue": "t2.micro"
+    },
+    {
+        "ParameterKey": "Environment",
+        "ParameterValue": "DEV"
+    }
+]
