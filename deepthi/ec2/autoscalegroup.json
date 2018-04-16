@@ -1,0 +1,139 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Template to create an autoscaling group",
+    "Resources": {
+        "myEC2SecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "service-security-group",
+                "VpcId": "vpc-54e1733c",
+                "SecurityGroupIngress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8080",
+                        "ToPort": "8080",
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": "22",
+                        "IpProtocol": "tcp",
+                        "ToPort": "22"
+                    }
+                ]
+            }
+        },
+        "ScaleGroupENI": {
+            "Type": "AWS::EC2::NetworkInterface",
+            "Properties": {
+                "SourceDestCheck": "false",
+                "GroupSet": [
+                    {
+                        "Ref": "myEC2SecurityGroup"
+                    }
+                ],
+                "SubnetId": "subnet-a21b8eca"
+            }
+        },
+        "SimpleConfig" : {
+            "Type" : "AWS::AutoScaling::LaunchConfiguration",
+            "Properties" : {
+               "ImageId" : "ami-25615740",
+               "SecurityGroups" : [ { "Ref" : "myEC2SecurityGroup" }],
+               "InstanceType" : "t2.micro"
+            }
+         },
+        "MyAutoScaleGroup": {
+            "Type": "AWS::AutoScaling::AutoScalingGroup",
+            "Properties": {
+                "AutoScalingGroupName": "MyAutoScaleGroup",
+                "AvailabilityZones": { "Fn::GetAZs" : ""},
+                "HealthCheckGracePeriod":5,
+                "LaunchConfigurationName":{ "Ref" : "SimpleConfig" },
+                "MaxSize" : "3",
+                "MinSize" : "1",
+                "Tags": [
+                    {
+                        "Key": "tr:financial-identifier",
+                        "Value": "450014377",
+                        "PropagateAtLaunch":"true"
+                    },
+                    {
+                        "Key": "tr:environment-type",
+                        "Value": "DEV",
+                        "PropagateAtLaunch":"true"
+                    },
+                    {
+                        "Key": "tr:application-asset-insight-id",
+                        "Value": "204257",
+                        "PropagateAtLaunch":"true"
+                    }
+                ]
+            }
+        },
+        "InstanceProfile": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Path": "/",
+                "Roles": [
+                    {
+                        "Ref": "EC2Role"
+                    }
+                ]
+            }
+        },
+        "EC2Role": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "ec2.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyName": "eureka",
+                        "PolicyDocument": {
+                            "Statement": [
+                                {
+                                    "Action": [
+                                        "logs:CreateLogGroup",
+                                        "logs:CreateLogStream",
+                                        "logs:PutLogEvents",
+                                        "logs:DescribeLogStreams",
+                                        "logs:DescribeLogGroups"
+                                    ],
+                                    "Resource": "arn:aws:logs:*:*:*",
+                                    "Effect": "Allow"
+                                },
+                                {
+                                    "Action": [
+                                        "cloudwatch:PutMetricData",
+                                        "elasticloadbalancing:DescribeLoadBalancers",
+                                        "elasticache:DescribeCacheClusters",
+                                        "ec2:DescribeTags",
+                                        "ssm:ListAssociations"
+                                    ],
+                                    "Resource": "*",
+                                    "Effect": "Allow"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    "Outputs": {}
+}
