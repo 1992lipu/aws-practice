@@ -1,0 +1,30 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Parameters": {
+        
+    },
+    "Resources": {
+        "SimpleConfig" : {
+          "Type" : "AWS::AutoScaling::LaunchConfiguration",
+          "Properties" : {
+          "ImageId" : "ami-1853ac65",
+          "InstanceType" : "t2.micro",
+          "BlockDeviceMappings" : [ {
+          "DeviceName" : "/dev/xvda",
+                 "Ebs" : {"VolumeSize" : "8"}
+          }
+     ]
+    }
+ },
+  "MyServerGroup" : {
+       "Type" : "AWS::AutoScaling::AutoScalingGroup",
+        "Properties" : {
+       "AvailabilityZones" : { "Fn::GetAZs" : ""},
+       "MinSize" : "1",
+       "MaxSize" : "3"
+    }
+ }
+  },
+    "Outputs": { 
+    }
+}
