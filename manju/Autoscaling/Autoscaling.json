@@ -1,0 +1,144 @@
+{
+"AWSTemplateFormatVersion": "2010-09-09",
+"Description": "Example for AutoScaling Group and LaunchConfiguration",
+    "Parameters": {
+        "Port": {
+            "Description": "Security group port",
+            "Type": "String",
+            "Default":"8080"
+            
+        },
+        "VPC": {
+            "Description": "A VPC to launch the spinnaker instance in.",
+            "Type": "AWS::EC2::VPC::Id",
+            "Default":"vpc-b4f566dc"
+        },
+        "Subnet": {
+            "Description": "subnet to attach network interface to",
+            "Type": "AWS::EC2::Subnet::Id",
+            "Default":"subnet-9f4183e5"
+        },
+        "KeyName": {
+            "Description":" Name of the Ec2 Keypair",
+            "Type": "String",
+            "Default":"Manju"
+        },
+        "EcsAMiId": {
+            "Description": "AMI for us-east-1 region",
+            "Type": "AWS::EC2::Image::Id",
+            "Default":"ami-a43c0cc1"
+        },
+        "ECInstanceType": {
+            "Description": "InstanceType for new Node",
+            "Type": "String",
+            "Default":"t2.micro"
+        },
+        "Environment": {
+            "Description": "Environment tag",
+            "Type": "String",
+            "Default":"Dev"
+        },
+        "IamRoleInstanceProfile": {
+            "Type": "String",
+            "Default": "example-ecs-role",
+            "Description": "Name or the Amazon Resource Name (ARN) of the instance profile associated with the IAM role for the instance"
+        },
+        "AsgMinSize": {
+            "Type": "Number",
+            "Description": "Minimum Size Capacity of ECS Auto Scaling Group",
+            "Default": "1"
+        },
+        "AsgMaxSize": {
+            "Type": "Number",
+            "Description": "Maximum Size Capacity of ECS Auto Scaling Group",
+            "Default": "3"
+        },
+        "AsgDesiredCapacity": {
+            "Type": "Number",
+            "Description": "Initial Desired Size of ECS Auto Scaling Group",
+            "Default": "2"
+        },
+        "AsgNotificationArn": {
+            "Type": "String",
+            "Description": "ECS Autoscale Notification SNS Topic ARN",
+            "Default": "arn:aws:sns:us-east-1:1234567890:example-ecs-autoscale-topic"
+        },
+        "EC2SecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup::Id",
+            "Description": "ECS Instance Security Group",
+            "Default": "sg-ba7c29d1"
+        }  
+    },
+    "Resources": {
+
+        "SimpleConfig" : {
+          "Type" : "AWS::AutoScaling::LaunchConfiguration",
+          "Properties" : {
+          "ImageId" : {
+                 "Ref":"EcsAMiId"
+          },
+          "InstanceType" : {
+                  "Ref":"ECInstanceType"
+          },
+          "IamInstanceProfile": {
+            "Ref": "IamRoleInstanceProfile"
+        },
+        "KeyName": {
+            "Ref": "KeyName"
+        },
+        "SecurityGroups":["sg-ba7c29d1"], 
+        "BlockDeviceMappings" : [ {
+          "DeviceName" : "/dev/xvda",
+                 "Ebs" : {"VolumeSize" : "8"}
+          }
+     ]
+    }
+ },
+  "MyScaliongGroup" : {
+       "Type" : "AWS::AutoScaling::AutoScalingGroup",
+        "Properties" : {
+       "AvailabilityZones" : { "Fn::GetAZs" : ""},
+       "LaunchConfigurationName": {
+        "Ref": "SimpleConfig"
+    },
+        "MinSize": {
+        "Ref": "AsgMinSize"
+    },
+        "MaxSize": {
+        "Ref": "AsgMaxSize"
+    },
+       "DesiredCapacity": {
+        "Ref": "AsgDesiredCapacity"
+    },
+    "Tags": [
+        {
+            "Key": "tr:financial-identifier",
+            "Value": "450014377"
+        },
+        {
+            "Key": "tr:environment-type",
+            "Value": "DEV"
+        },
+        {
+            "Key": "tr:application-asset-insight-id",
+            "Value": "204257"
+        }
+     ]
+    }
+  }  
+ },
+    "Outputs": { 
+        "EcsAutoScalingGroupName": {
+            "Description": "AutoScaling Group Name which will manage creation of new ECS Instances",
+            "Value": {
+                "Ref": "MyScaliongGroup"
+            }
+        },
+        "EcsLaunchConfiguration": {
+            "Description": "Launch Configuration the AutoScalingGroup will use when creating new ECS Instances",
+            "Value": {
+                "Ref": "SimpleConfig"
+            }
+        }
+    }
+}
