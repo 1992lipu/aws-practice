@@ -1,13 +1,43 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Parameters": {
-        
-    },
-    "Resources": {
+    "Description": "Template to create an autoscaling group",
+        "Resources": {
+            "myEC2SecurityGroup" : {
+                "Type" : "AWS::EC2::SecurityGroup",
+                "Properties" : {
+                   "GroupDescription" : "Allow http to client host",
+                   "VpcId" : "vpc-d923bda2",
+                   "SecurityGroupIngress" : [{
+                         "IpProtocol" : "tcp",
+                         "FromPort" : "80",
+                         "ToPort" : "80",
+                         "CidrIp" : "0.0.0.0/0"
+                      }],
+                   "SecurityGroupEgress" : [{
+                      "IpProtocol" : "tcp",
+                      "FromPort" : "80",
+                      "ToPort" : "80",
+                      "CidrIp" : "0.0.0.0/0"
+                   }]
+                }
+             }, 
+             "MyGroupENI": {
+                "Type": "AWS::EC2::NetworkInterface",
+                "Properties": {
+                    "SourceDestCheck": "false",
+                    "GroupSet": [
+                        {
+                            "Ref": "myEC2SecurityGroup"
+                        }
+                    ],
+                    "SubnetId": "subnet-69babe34"
+                }
+            },         
         "SimpleConfig" : {
           "Type" : "AWS::AutoScaling::LaunchConfiguration",
           "Properties" : {
           "ImageId" : "ami-1853ac65",
+          "SecurityGroups" : [ { "Ref" : "myEC2SecurityGroup" }],
           "InstanceType" : "t2.micro",
           "BlockDeviceMappings" : [ {
           "DeviceName" : "/dev/xvda",
@@ -16,12 +46,14 @@
      ]
     }
  },
-  "MyServerGroup" : {
-       "Type" : "AWS::AutoScaling::AutoScalingGroup",
-        "Properties" : {
-       "AvailabilityZones" : { "Fn::GetAZs" : ""},
-       "MinSize" : "1",
-       "MaxSize" : "3"
+      "MyAutoScaleGroup" : {
+         "Type" : "AWS::AutoScaling::AutoScalingGroup",
+         "Properties" : {
+         "AutoScalingGroupName": "MyAutoScaleGroup",   
+         "LaunchConfigurationName":{ "Ref" : "SimpleConfig" },
+         "AvailabilityZones" : { "Fn::GetAZs" : ""},
+         "MinSize" : "1",
+         "MaxSize" : "3"
     }
  }
   },
