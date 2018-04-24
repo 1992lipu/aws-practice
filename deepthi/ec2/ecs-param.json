@@ -1,0 +1,50 @@
+[
+    {
+        "ParameterKey": "AppName",
+        "ParameterValue": "ecs-app"
+    },
+    {
+        "ParameterKey": "AppContainerPort",
+        "ParameterValue": "80"
+    },
+    {
+        "ParameterKey": "AppHostPort",
+        "ParameterValue": "8080"
+    },
+    {
+        "ParameterKey": "KeyName",
+        "ParameterValue": "us-east1-key"
+    },
+    {
+        "ParameterKey": "VpcId",
+        "ParameterValue": "vpc-d3630da8"
+    },
+    {
+        "ParameterKey": "SubnetID",
+        "ParameterValue": "subnet-38e4ed65"
+    },
+    {
+        "ParameterKey": "DesiredCapacity",
+        "ParameterValue": "1"
+    },
+    {
+        "ParameterKey": "MaxSize",
+        "ParameterValue": "3"
+    },
+    {
+        "ParameterKey": "EcsClusterAuthType",
+        "ParameterValue": "docker"
+    },
+    {
+        "ParameterKey": "EcsClusterAuthData",
+        "ParameterValue": "{\"https://index.docker.io/v1/\":{\"username\":\"dtipirneni\",\"password\":\"P@ssw0rd\",\"email\":\"dtipirneni@gmail.com\"}}"
+    },
+    {
+        "ParameterKey": "EcsAmiId",
+        "ParameterValue": "ami-3d55272a"
+    },
+    {
+        "ParameterKey": "InstanceType",
+        "ParameterValue": "t2.micro"
+    }
+]
