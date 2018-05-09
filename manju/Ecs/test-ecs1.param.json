@@ -1,0 +1,50 @@
+[
+  {
+      "ParameterKey": "AppName",
+      "ParameterValue": "my-apache-app"
+  },
+    {
+       "ParameterKey": "AppContainerPort",
+       "ParameterValue": "80"
+   },
+    {
+        "ParameterKey": "AppHostPort",
+        "ParameterValue": "8080"
+    },
+    {
+        "ParameterKey": "KeyName",
+        "ParameterValue": "Manju"
+    },
+    {
+        "ParameterKey": "VpcId",
+        "ParameterValue": "vpc-b4f566dc"
+    },
+    {
+        "ParameterKey": "SubnetID",
+        "ParameterValue": "subnet-9f4183e5"
+    },
+    {
+        "ParameterKey": "EcsAmiId",
+        "ParameterValue": "ami-3d55272a"
+    },
+    {
+        "ParameterKey": "InstanceType",
+        "ParameterValue": "t2.micro"
+    },
+    {
+        "ParameterKey": "DesiredCapacity",
+        "ParameterValue": "2"
+    },
+    {
+        "ParameterKey": "MaxSize",
+        "ParameterValue": "3"
+    },
+    {
+        "ParameterKey": "EcsClusterAuthType",
+        "ParameterValue": "docker"
+    },
+    {
+        "ParameterKey": "EcsClusterAuthData",
+        "ParameterValue":"{\"https://index.docker.io/v1/\":{\"username\":\"my_name\",\"password\":\"my_password\",\"email\":\"email@example.com\"}}"
+    }
+    ]
