@@ -1,19 +1,16 @@
 {
-    "AWSTemplateFormatVersion" : "2010-09-09",
+  "AWSTemplateFormatVersion": "2010-09-09",
   
-    "Description" : "Oscar's modified version // AWS CloudFormation Sample Template VPC_RDS_DB_Instance: Sample template showing how to create an RDS DBInstance in an existing Virtual Private Cloud (VPC).",
+    "Description" : "AWS CloudFormation Sample Template VPC_RDS_DB_Instance: Sample template showing how to create an RDS DBInstance in an existing Virtual Private Cloud (VPC).",
   
     "Parameters" : {
   
       "VpcId" : {
+        "Default" :"vpc-d923bda2",
         "Type" : "String",
         "Description" : "VpcId of your existing Virtual Private Cloud (VPC)"
       },
   
-      "Subnets" : {
-        "Type" : "CommaDelimitedList",
-        "Description" : "The list of SubnetIds, for at least two Availability Zones in the region in your Virtual Private Cloud (VPC)"
-      },
   
       "DBName": {
         "Default": "MytestDatabase",
@@ -48,11 +45,9 @@
       },
   
       "DBClass" : {
-        "Default" : "db.t2.small",
+        "Default" : "db.t2.micro",
         "Description" : "Database instance class",
-        "Type" : "String",
-        "AllowedValues" : [ "db.m1.small", "db.m1.large", "db.m1.xlarge", "db.m2.xlarge", "db.m2.2xlarge", "db.m2.4xlarge" ],
-        "ConstraintDescription" : "must select a valid database instance type."
+        "Type" : "String"
       },
   
       "DBAllocatedStorage" : {
@@ -71,8 +66,8 @@
         "Type" : "AWS::RDS::DBSubnetGroup",
         "Properties" : {
           "DBSubnetGroupDescription" : "Subnets available for the RDS DB Instance",
-          "SubnetIds" : { "Ref" : "Subnets" }
-        }
+          "SubnetIds" : [ "subnet-69babe34", "subnet-ed65cce2" ]
+  }  
       },
   
   
