@@ -4,14 +4,18 @@
     "Description" : "AWS CloudFormation Sample Template VPC_RDS_DB_Instance: Sample template showing how to create an RDS DBInstance in an existing Virtual Private Cloud (VPC).",
   
     "Parameters" : {
-  
       "VpcId" : {
-        "Default" :"vpc-d923bda2",
+        "Default" :"vpc-4b811c23",
         "Type" : "String",
         "Description" : "VpcId of your existing Virtual Private Cloud (VPC)"
       },
-  
-  
+
+      "RDSSnapshot" : {
+        "Description" : "RDS Snapshot identifier (name) to restore from. Leave blank to create an empty database.",
+        "Default" : "",
+        "Type" : "String"
+     },
+
       "DBName": {
         "Default": "MytestDatabase",
         "Description" : "The database name",
@@ -61,12 +65,12 @@
     },
   
     "Resources" : {
-  
+
       "MyDBSubnetGroup" : {
         "Type" : "AWS::RDS::DBSubnetGroup",
         "Properties" : {
           "DBSubnetGroupDescription" : "Subnets available for the RDS DB Instance",
-          "SubnetIds" : [ "subnet-69babe34", "subnet-ed65cce2" ]
+          "SubnetIds" : [ "subnet-5c04c826", "subnet-4fc9f002" ]
   }  
       },
   
@@ -75,25 +79,14 @@
           "Properties" :
           {
              "GroupDescription" : "Security group for RDS DB Instance.",
-             "VpcId" : { "Ref" : "VpcId" },
-             "SecurityGroupIngress" : [{
-              "IpProtocol" : "tcp",
-              "FromPort" : "80",
-              "ToPort" : "80",
-              "CidrIp" : "0.0.0.0/0"
-           }],
-        "SecurityGroupEgress" : [{
-           "IpProtocol" : "tcp",
-           "FromPort" : "80",
-           "ToPort" : "80",
-           "CidrIp" : "0.0.0.0/0"
-        }]
+             "VpcId" : { "Ref" : "VpcId" }
           }
       },
   
       "MyDB" : {
         "Type" : "AWS::RDS::DBInstance",
         "Properties" : {
+          "DBInstanceIdentifier" : "som-test",
           "DBName" : { "Ref" : "DBName" },
           "AllocatedStorage" : { "Ref" : "DBAllocatedStorage" },
           "DBInstanceClass" : { "Ref" : "DBClass" },
@@ -102,11 +95,61 @@
           "MasterUsername" : { "Ref" : "DBUsername" } ,
           "MasterUserPassword" : { "Ref" : "DBPassword" },
           "DBSubnetGroupName" : { "Ref" : "MyDBSubnetGroup" },
-          "VPCSecurityGroups" : [ { "Ref" : "myVPCSecurityGroup" }  ]
+          "VPCSecurityGroups" : [ { "Ref" : "myVPCSecurityGroup" }],
+          "PubliclyAccessible": "true",
+          "DBSnapshotIdentifier" : { "Ref" : "RDSSnapshot" }
         }
-      }
+      },
+      "KMS": {
+        "Type": "AWS::KMS::Key",
+        "Properties": {
+            "Description": "rds-testkey",
+            "KeyPolicy": {
+                "Version": "2012-10-17",
+                "Id": "key-default-1",
+                "Statement": [
+                    {
+                        "Sid": "Allow administration of the key",
+                        "Effect": "Allow",
+                        "Principal": {
+                            "AWS": "arn:aws:iam::768069707814:user/Soumya"
+                        },
+                        "Action": [
+                            "kms:Create*",
+                            "kms:Describe*",
+                            "kms:Enable*",
+                            "kms:List*",
+                            "kms:Put*",
+                            "kms:Update*",
+                            "kms:Revoke*",
+                            "kms:Disable*",
+                            "kms:Get*",
+                            "kms:Delete*",
+                            "kms:ScheduleKeyDeletion",
+                            "kms:CancelKeyDeletion"
+                        ],
+                        "Resource": "*"
+                    },
+                    {
+                        "Sid": "Allow use of the key",
+                        "Effect": "Allow",
+                        "Principal": {
+                            "AWS": "arn:aws:iam::768069707814:user/Soumya"
+                        },
+                        "Action": [
+                            "kms:Encrypt",
+                            "kms:Decrypt",
+                            "kms:ReEncrypt*",
+                            "kms:GenerateDataKey*",
+                            "kms:DescribeKey"
+                        ],
+                        "Resource": "*"
+                    }
+                ]
+            }
+        }
+    }
     },
-  
     "Outputs" : {
       "JDBCConnectionString": {
         "Description" : "JDBC connection string for database",
