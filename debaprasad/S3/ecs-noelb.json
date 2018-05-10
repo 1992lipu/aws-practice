@@ -1,53 +1,61 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "AWS CloudFormation template for analytics qa ECS and services",
+    "Description": "AWS CloudFormation template to ECS and run stuff in it",
     "Parameters": {
+        "AppName": {
+            "Type": "String",
+            "Description": "App name"
+        },
+        "AppContainerPort": {
+            "Type": "String",
+            "Description": "App Container Port"
+        },
+        "AppHostPort": {
+            "Type": "String",
+            "Description": "App Host Port"
+        },
         "KeyName": {
             "Type": "AWS::EC2::KeyPair::KeyName",
-            "Description": "Name of an existing EC2 KeyPair to enable SSH access to the ECS instances.",
-            "Default": "SF_DeployTest"
+            "Description": "Name of an existing EC2 KeyPair to enable SSH access to the ECS instances."
         },
         "VpcId": {
             "Type": "AWS::EC2::VPC::Id",
-            "Description": "Select a VPC that allows instances to access the Internet.",
-            "Default": "vpc-1192dd76"
+            "Description": "Select a VPC that allows instances to access the Internet."
         },
         "SubnetID": {
             "Type": "CommaDelimitedList",
-            "Description": "Select at two subnets in your selected VPC.",
-            "Default": "subnet-c00e77a5,subnet-7d846041"
+            "Description": "Select at two subnets in your selected VPC."
         },
         "DesiredCapacity": {
             "Type": "Number",
-            "Description": "Number of instances to launch in your ECS cluster.",
-            "Default": "1"
+            "Description": "Number of instances to launch in your ECS cluster."
         },
         "MaxSize": {
             "Type": "Number",
-            "Description": "Maximum number of instances that can be launched in your ECS cluster.",
-            "Default": "2"
+            "Description": "Maximum number of instances that can be launched in your ECS cluster."
         },
         "EcsClusterAuthType": {
             "Type": "String",
             "Description": "ECS Cluster Auth Type",
-            "Default": "docker"
+            "Default": "default"
         },
         "EcsClusterAuthData": {
             "Type": "String",
             "Description": "ECS Cluster Auth Data",
-            "Default": "{\"https://index.docker.io/v1/\":{\"username\":\"trnirvana\",\"password\":\"Neal_caffery1\",\"email\":\"1992lipu@gmail.com\"}}",
-            "NoEcho": true
+            "Default": "default"
         },
         "InstanceType": {
             "Description": "EC2 instance type",
             "Type": "String",
-            "ConstraintDescription": "Please choose a valid instance type.",
-            "Default":"t2.micro"
+            "AllowedValues": [
+                "t2.micro" 
+            ],
+            "ConstraintDescription": "Please choose a valid instance type."
         },
         "EcsAmiId": {
             "Type": "String",
             "Description": "ECS EC2 AMI id",
-            "Default": "ami-cb17d8b6"
+            "Default": "ami-b2a445a4"
         }
     },
     "Mappings": {
@@ -85,7 +93,7 @@
         "ECSCluster": {
             "Type": "AWS::ECS::Cluster",
             "Properties": {
-                "ClusterName": "analytics-qa-ecs"
+                "ClusterName": "Analytics-Dev-Peers"
             }
         },
         "EcsSecurityGroup": {
@@ -104,7 +112,7 @@
                     "Ref": "EcsSecurityGroup"
                 },
                 "IpProtocol": "tcp",
-                "FromPort": "8000",
+                "FromPort": "9000",
                 "ToPort": "9900",
                 "CidrIp": "0.0.0.0/0"
             }
@@ -138,6 +146,38 @@
                 "RetentionInDays": 14
             }
         },
+        "taskdefinition": {
+            "Type": "AWS::ECS::TaskDefinition",
+            "Properties": {
+                "ContainerDefinitions": [
+                    {
+                        "Name": {
+                            "Ref": "AppName"
+                        },
+                        "Image": "docker-amers.int.thomsonreuters.com:5001/nirvana/service-peers-boot:service-peers-boot.1.0.162.0",
+                        "Cpu": "0",
+                        "PortMappings": [
+                            {
+                                "ContainerPort": {
+                                    "Ref": "AppContainerPort"
+                                },
+                                "HostPort": {
+                                    "Ref": "AppHostPort"
+                                }
+                            }
+                        ],
+                        "Environment": [
+                            {
+                                "Name": "env",
+                                "Value": "dev"
+                            }
+                        ],
+                        "Memory": "500",
+                        "Essential": "true"
+                    }
+                ]
+            }
+        },
         "ECSAutoScalingGroup": {
             "Type": "AWS::AutoScaling::AutoScalingGroup",
             "Properties": {
@@ -169,13 +209,18 @@
                         "Key": "tr:application-asset-insight-id",
                         "Value": "204257",
                         "PropagateAtLaunch": "true"
-                    },
-                    {
-                        "Key": "Name",
-                        "Value": "ECS-ANALYTICS-QA",
-                        "PropagateAtLaunch": "true"
                     }
                 ]
+            },
+            "CreationPolicy": {
+                "ResourceSignal": {
+                    "Timeout": "PT5M"
+                }
+            },
+            "UpdatePolicy": {
+                "AutoScalingReplacingUpdate": {
+                    "WillReplace": "true"
+                }
             }
         },
         "ContainerInstances": {
@@ -205,6 +250,11 @@
                             "",
                             [
                                 "#!/bin/bash\n",
+                                "echo ECS_CLUSTER=",
+                                {
+                                    "Ref": "ECSCluster"
+                                },
+                                " >> /etc/ecs/ecs.config\n",
                                 "yum install -y aws-cfn-bootstrap\n",
                                 "/opt/aws/bin/cfn-signal -e $? ",
                                 "         --stack ",
@@ -213,10 +263,6 @@
                                 },
                                 "         --resource ECSAutoScalingGroup ",
                                 "         --region us-east-1",
-                                "echo ECS_CLUSTER=",
-                                {
-                                    "Ref": "ECSCluster"
-                                },
                                 " >> /etc/ecs/ecs.config\n",
                                 "echo ECS_ENGINE_AUTH_TYPE=",
                                 {
@@ -237,6 +283,184 @@
                             ]
                         ]
                     }
+                }
+            }
+        },
+        "service": {
+            "Type": "AWS::ECS::Service",
+            "Properties": {
+                "Cluster": {
+                    "Ref": "ECSCluster"
+                },
+                "DesiredCount": "1",
+                "TaskDefinition": {
+                    "Ref": "taskdefinition"
+                }
+            }
+        },
+        "ECSServiceRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "ecs.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyName": "ecs-service",
+                        "PolicyDocument": {
+                            "Statement": [
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "ec2:Describe*",
+                                        "ec2:AuthorizeSecurityGroupIngress"
+                                    ],
+                                    "Resource": "*"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "ServiceScalingTarget": {
+            "Type": "AWS::ApplicationAutoScaling::ScalableTarget",
+            "DependsOn": "service",
+            "Properties": {
+                "MaxCapacity": 2,
+                "MinCapacity": 1,
+                "ResourceId": {
+                    "Fn::Join": [
+                        "",
+                        [
+                            "service/",
+                            {
+                                "Ref": "ECSCluster"
+                            },
+                            "/",
+                            {
+                                "Fn::GetAtt": [
+                                    "service",
+                                    "Name"
+                                ]
+                            }
+                        ]
+                    ]
+                },
+                "RoleARN": {
+                    "Fn::GetAtt": [
+                        "AutoscalingRole",
+                        "Arn"
+                    ]
+                },
+                "ScalableDimension": "ecs:service:DesiredCount",
+                "ServiceNamespace": "ecs"
+            }
+        },
+        "ServiceScalingPolicy": {
+            "Type": "AWS::ApplicationAutoScaling::ScalingPolicy",
+            "Properties": {
+                "PolicyName": "AStepPolicy",
+                "PolicyType": "StepScaling",
+                "ScalingTargetId": {
+                    "Ref": "ServiceScalingTarget"
+                },
+                "StepScalingPolicyConfiguration": {
+                    "AdjustmentType": "PercentChangeInCapacity",
+                    "Cooldown": 60,
+                    "MetricAggregationType": "Average",
+                    "StepAdjustments": [
+                        {
+                            "MetricIntervalLowerBound": 0,
+                            "ScalingAdjustment": 200
+                        }
+                    ]
+                }
+            }
+        },
+        "ALB500sAlarmScaleUp": {
+            "Type": "AWS::CloudWatch::Alarm",
+            "Properties": {
+                "EvaluationPeriods": "1",
+                "Statistic": "Average",
+                "Threshold": "10",
+                "AlarmDescription": "Alarm if our ALB generates too many HTTP 500s.",
+                "Period": "60",
+                "AlarmActions": [
+                    {
+                        "Ref": "ServiceScalingPolicy"
+                    }
+                ],
+                "Namespace": "AWS/ApplicationELB",
+                "Dimensions": [
+                    {
+                        "Name": "ECSService",
+                        "Value": {
+                            "Ref": "service"
+                        }
+                    }
+                ],
+                "ComparisonOperator": "GreaterThanThreshold",
+                "MetricName": "HTTPCode_ELB_5XX_Count"
+            }
+        },
+        "CPUAlarmHighECS": {
+            "Type": "AWS::CloudWatch::Alarm",
+            "Properties": {
+                "EvaluationPeriods": "1",
+                "Statistic": "Average",
+                "Threshold": "80",
+                "AlarmDescription": "Alarm if CPU too high or metric disappears indicating instance is down",
+                "Period": "60",
+                "AlarmActions": [
+                    {
+                        "Ref": "ServiceScalingPolicyHighCpuUsage"
+                    }
+                ],
+                "Namespace": "AWS/ApplicationELB",
+                "Dimensions": [
+                    {
+                        "Name": "ECSService",
+                        "Value": {
+                            "Ref": "service"
+                        }
+                    }
+                ],
+                "ComparisonOperator": "GreaterThanThreshold",
+                "MetricName": "CPUUtilization"
+            }
+        },
+        "ServiceScalingPolicyHighCpuUsage": {
+            "Type": "AWS::ApplicationAutoScaling::ScalingPolicy",
+            "Properties": {
+                "PolicyName": "CpuHighUsage",
+                "PolicyType": "StepScaling",
+                "ScalingTargetId": {
+                    "Ref": "ServiceScalingTarget"
+                },
+                "StepScalingPolicyConfiguration": {
+                    "AdjustmentType": "ChangeInCapacity",
+                    "Cooldown": 60,
+                    "MetricAggregationType": "Minimum",
+                    "StepAdjustments": [
+                        {
+                            "ScalingAdjustment": 1,
+                            "MetricIntervalLowerBound": 0
+                        }
+                    ]
                 }
             }
         },
@@ -280,11 +504,7 @@
                                         "ecr:BatchGetImage",
                                         "logs:CreateLogStream",
                                         "logs:PutLogEvents",
-                                        "cloudformation:SignalResource",
-                                        "s3:PutObject",
-                                        "s3:PutObjectAcl",
-                                        "s3:GetObject",
-                                        "s3:DeleteObject"
+                                        "s3*"
                                     ],
                                     "Resource": "*"
                                 }
@@ -325,7 +545,6 @@
                                         "cloudwatch:DescribeAlarms",
                                         "cloudwatch:PutMetricAlarm",
                                         "ecs:DescribeServices",
-                                        "cloudformation:SignalResource",
                                         "ecs:UpdateService"
                                     ],
                                     "Resource": "*"
@@ -423,17 +642,19 @@
         }
     },
     "Outputs": {
+        "ecsservice": {
+            "Value": {
+                "Ref": "service"
+            }
+        },
         "ecscluster": {
             "Value": {
                 "Ref": "ECSCluster"
             }
         },
-        "EC2Role": {
+        "taskdef": {
             "Value": {
-                "Fn::GetAtt": [
-                    "EC2Role",
-                    "Arn"
-                ]
+                "Ref": "taskdefinition"
             }
         }
     }

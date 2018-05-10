@@ -1,73 +1,67 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "AWS CloudFormation template to create ECS and clusters.",
+    "Description": "AWS CloudFormation template to ECS and run stuff in it",
     "Parameters": {
         "AppName": {
             "Type": "String",
-            "Description": "App name",
-            "Default" : "my-apache-app"
+            "Description": "App name"
         },
         "AppContainerPort": {
             "Type": "String",
-            "Description": "App Container Port Number",
-            "Default" : "80"
-
+            "Description": "App Container Port"
         },
         "AppHostPort": {
             "Type": "String",
-            "Description": "App Host Port Number",
-            "Default" : "8080"
+            "Description": "App Host Port"
         },
         "KeyName": {
             "Type": "AWS::EC2::KeyPair::KeyName",
-            "Description": "Name of an existing EC2 KeyPair to enable SSH access to the ECS instances.",
-            "Default" :"soumya"
+            "Description": "Name of an existing EC2 KeyPair to enable SSH access to the ECS instances."
         },
         "VpcId": {
             "Type": "AWS::EC2::VPC::Id",
-            "Description": "Select a VPC that allows instances to access the Internet.",
-            "Default" :"vpc-d923bda2"
+            "Description": "Select a VPC that allows instances to access the Internet."
         },
         "SubnetID": {
             "Type": "CommaDelimitedList",
-            "Description": "Select at two subnets in your selected VPC.",
-            "Default" :"subnet-69babe34"
+            "Description": "Select at two subnets in your selected VPC."
         },
         "DesiredCapacity": {
             "Type": "Number",
-            "Description": "Number of instances to launch in your ECS cluster.",
-            "Default" :"2"
+            "Description": "Number of instances to launch in your ECS cluster."
         },
         "MaxSize": {
             "Type": "Number",
-            "Description": "Maximum number of instances that can be launched in your ECS cluster.",
-            "Default" :"3"
+            "Description": "Maximum number of instances that can be launched in your ECS cluster."
         },
         "EcsClusterAuthType": {
             "Type": "String",
             "Description": "ECS Cluster Auth Type",
-            "Default": "docker"
+            "Default": "default"
         },
         "EcsClusterAuthData": {
             "Type": "String",
             "Description": "ECS Cluster Auth Data",
-            "Default": {"https://index.docker.io/v1/":{"username":"src4it","3T50ye42Q5":"","email":"src4it@gmail.com"}}
+            "Default": "default"
         },
         "InstanceType": {
             "Description": "EC2 instance type",
             "Type": "String",
-            "Default": "t2.micro"
+            "AllowedValues": [
+                "t2.micro"
+            ],
+            "ConstraintDescription": "Please choose a valid instance type."
         },
         "EcsAmiId": {
             "Type": "String",
             "Description": "ECS EC2 AMI id",
-            "Default": "ami-3d55272a"
+            "Default": "ami-467ca739"
         }
     },
     "Mappings": {
         "AWSRegionToAMI": {
             "us-east-1": {
-                "AMIID": "ami-467ca739"
+                "AMIID": "ami-eca289fb"
             }
         }
     },
@@ -75,7 +69,7 @@
         "ECSCluster": {
             "Type": "AWS::ECS::Cluster",
             "Properties": {
-                "ClusterName": "test-cluster"
+                "ClusterName": "Analytics-Dev-Peers"
             }
         },
         "EcsSecurityGroup": {
@@ -94,8 +88,8 @@
                     "Ref": "EcsSecurityGroup"
                 },
                 "IpProtocol": "tcp",
-                "FromPort": "8080",
-                "ToPort": "8080",
+                "FromPort": "9000",
+                "ToPort": "9900",
                 "CidrIp": "0.0.0.0/0"
             }
         },
@@ -136,8 +130,8 @@
                         "Name": {
                             "Ref": "AppName"
                         },
-                        "Image": "httpd:2.4",
-                        "Cpu": "128",
+                        "Image": "docker-amers.int.thomsonreuters.com:5001/nirvana/service-peers-boot:service-peers-boot.1.0.162.0",
+                        "Cpu": "0",
                         "PortMappings": [
                             {
                                 "ContainerPort": {
@@ -154,7 +148,7 @@
                                 "Value": "dev"
                             }
                         ],
-                        "Memory": "400",
+                        "Memory": "500",
                         "Essential": "true"
                     }
                 ]
@@ -258,6 +252,7 @@
                                 "'",
                                 " >> /etc/ecs/ecs.config\n",
                                 "\n",
+                                "echo 'nameserver 10.204.50.29' | cat - /etc/resolv.conf > temp && mv temp /etc/resolv.conf\n",
                                 "sudo -i\n",
                                 "stop ecs\n",
                                 "start ecs\n"

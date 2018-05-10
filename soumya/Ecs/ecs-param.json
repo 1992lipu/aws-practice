@@ -1,0 +1,51 @@
+[
+    {
+        "ParameterKey": "KeyName",
+        "ParameterValue": "soumya"
+    },
+    {
+        "ParameterKey": "VpcId",
+        "ParameterValue": "vpc-d923bda2"
+    },
+    {
+        "ParameterKey": "SubnetID",
+        "ParameterValue": "subnet-69babe34"
+    },
+    {
+        "ParameterKey": "EcsAmiId",
+        "ParameterValue": "ami-3d55272a"
+    },
+    {
+        "ParameterKey": "InstanceType",
+        "ParameterValue": "t2.micro"
+    },
+    {
+        "ParameterKey": "AppName",
+        "ParameterValue": "my-apache-app"
+    },
+    {
+        "ParameterKey": "AppContainerPort",
+        "ParameterValue" : "80"
+    },
+    {
+        "ParameterKey": "AppHostPort",
+        "ParameterValue": "8080"
+    },
+    {
+        "ParameterKey": "DesiredCapacity",
+        "ParameterValue": "1"
+    },
+    {
+        "ParameterKey":"MaxSize",
+        "ParameterValue":"3"
+    },
+    {
+        "ParameterKey":"EcsClusterAuthType",
+        "ParameterValue" :"docker"
+    },
+    {
+        "ParameterKey":"EcsClusterAuthData",
+        "ParameterValue": "{\"https://index.docker.io/v1/\":{\"username\":\"src4it\",\"3T50ye42Q5\":\"pwd\",\"email\":\"src4it@gmail.com\"}}"
+    }
+
+]
