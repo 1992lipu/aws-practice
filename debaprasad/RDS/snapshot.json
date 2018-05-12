@@ -1,0 +1,84 @@
+{
+    "Parameters": {
+        "DBName": {
+            "Default": "wordpress",
+            "Description": "The WordPress database name",
+            "Type": "String",
+            "MinLength": "1",
+            "MaxLength": "64",
+            "AllowedPattern": "[a-zA-Z][a-zA-Z0-9]*",
+            "ConstraintDescription": "must begin with a letter and contain only alphanumeric characters."
+        },
+        "DBSnapshotIdentifier": {
+            "Description": " The RDS MySQL snapshot name to restore to the new DB instance.",
+            "Type": "String",
+            "Default": ""
+        }
+    },
+    "Conditions": {
+        "UseDbSnapshot": {
+            "Fn::Not": [
+                {
+                    "Fn::Equals": [
+                        {
+                            "Ref": "DBSnapshotIdentifier"
+                        },
+                        ""
+                    ]
+                }
+            ]
+        }
+    },
+    "Resources": {
+        "DBInstance": {
+            "Type": "AWS::RDS::DBInstance",
+            "Properties": {
+                "DBName": {
+                    "Fn::If": [
+                        "UseDbSnapshot",
+                        {
+                            "Ref": "AWS::NoValue"
+                        },
+                        {
+                            "Ref": "DBName"
+                        }
+                    ]
+                },
+                "Engine": "MySQL",
+                "MasterUsername": {
+                    "Ref": "DBUsername"
+                },
+                "DBInstanceClass": {
+                    "Ref": "DBClass"
+                },
+                "DBSecurityGroups": [
+                    {
+                        "Ref": "DBSecurityGroup"
+                    }
+                ],
+                "DBSubnetGroupName": {
+                    "Ref": "DBSubnetGroup"
+                },
+                "AllocatedStorage": {
+                    "Ref": "DBAllocatedStorage"
+                },
+                "MasterUserPassword": {
+                    "Ref": "DBPassword"
+                },
+                "DBSnapshotIdentifier": {
+                    "Fn::If": [
+                        "UseDbSnapshot",
+                        {
+                            "Ref": "DBSnapshotIdentifier"
+                        },
+                        {
+                            "Ref": "AWS::NoValue"
+                        }
+                    ]
+                },
+                "MultiAZ": true
+            },
+            "DeletionPolicy": "Snapshot"
+        }
+    }
+}
