@@ -10,11 +10,12 @@
         "Description" : "VpcId of your existing Virtual Private Cloud (VPC)"
       },
 
-      "DBSnapshotIdentifier": {
-        "Description": " The RDS MySQL snapshot name to restore to the new DB instance.",
-        "Type": "String",
-        "Default": ""
-    },
+      "RDSSnapshot" : {
+        "Description" : "RDS Snapshot identifier (name) to restore from. Leave blank to create an empty database.",
+        "Default" : "",
+        "Type" : "String"
+     },
+
       "DBName": {
         "Default": "MytestDatabase",
         "Description" : "The database name",
@@ -62,20 +63,7 @@
         "ConstraintDescription" : "must be between 5 and 1024Gb."
       }
     },
-    "Conditions": {
-      "UseDbSnapshot": {
-          "Fn::Not": [
-              {
-                  "Fn::Equals": [
-                      {
-                          "Ref": "DBSnapshotIdentifier"
-                      },
-                      ""
-                  ]
-              }
-          ]
-      }
-  },
+  
     "Resources" : {
 
       "MyDBSubnetGroup" : {
@@ -111,17 +99,7 @@
         "Type" : "AWS::RDS::DBInstance",
         "Properties" : {
           "DBInstanceIdentifier" : "som-test",
-          "DBName": {
-            "Fn::If": [
-                "UseDbSnapshot",
-                {
-                    "Ref": "AWS::NoValue"
-                },
-                {
-                    "Ref": "DBName"
-                }
-            ]
-        },
+          "DBName" : { "Ref" : "DBName" },
           "AllocatedStorage" : { "Ref" : "DBAllocatedStorage" },
           "DBInstanceClass" : { "Ref" : "DBClass" },
           "Engine" : "MySQL",
@@ -131,22 +109,8 @@
           "DBSubnetGroupName" : { "Ref" : "MyDBSubnetGroup" },
           "VPCSecurityGroups" : [ { "Ref" : "myVPCSecurityGroup" }],
           "PubliclyAccessible": "true",
-          "DBSnapshotIdentifier": {
-            "Fn::If": [
-                "UseDbSnapshot",
-                {
-                    "Ref": "DBSnapshotIdentifier"
-                },
-                {
-                    "Ref": "AWS::NoValue"
-                }
-            ]
-        },
-        "MultiAZ": true,
-        "KmsKeyId" : "arn:aws:kms:us-east-2:768069707814:key/e2e02f30-9992-4320-9a19-ffa3493fe77d ",
-        "StorageEncrypted" : "true"
-        },
-        "DeletionPolicy": "Snapshot"
+          "DBSnapshotIdentifier" : { "Ref" : "RDSSnapshot" }
+        }
       }
     },
     "Outputs" : {
