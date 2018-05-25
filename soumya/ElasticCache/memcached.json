@@ -1,0 +1,86 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Cloudformation template for creating memCached Cluster",
+    "Parameters": {
+      "NodeInstanceType": {
+        "Type": "String",
+        "Default": "cache.t2.micro"
+      },
+      "SubnetGroup": {
+        "Type": "String",
+        "Default": "elasticcache-subnet"
+      },
+      "ClusterSize": {
+        "Type": "String",
+        "Default": "1"
+      },
+      "Port": {
+        "Type": "String",
+        "Default": "11211"
+      },
+      "VPC": {
+        "Type": "AWS::EC2::VPC::Id",
+        "Default": "vpc-d923bda2"
+      }
+    },
+    "Resources": {
+      "SecurityGroup": {
+        "Type": "AWS::EC2::SecurityGroup",
+        "Properties": {
+          "GroupDescription": "memcached-security-group",
+          "VpcId": {
+            "Ref": "VPC"
+          },
+          "SecurityGroupIngress": [
+            {
+              "IpProtocol": "tcp",
+              "FromPort": {
+                "Ref": "Port"
+              },
+              "ToPort": {
+                "Ref": "Port"
+              },
+              "CidrIp": "0.0.0.0/0"
+            },
+            {
+              "CidrIp": "0.0.0.0/0",
+              "FromPort": "22",
+              "IpProtocol": "tcp",
+              "ToPort": "22"
+            }
+          ]
+        }
+      },
+      "memcachedInstance": {
+        "Type": "AWS::ElastiCache::CacheCluster",
+        "Properties": {
+          "CacheNodeType": {
+            "Ref": "NodeInstanceType"
+          },
+          "CacheSubnetGroupName": {
+            "Ref": "SubnetGroup"
+          },
+          "Engine": "memcached",
+          "NumCacheNodes": {
+            "Ref": "ClusterSize"
+          },
+          "Port": {
+            "Ref": "Port"
+          },
+          "VpcSecurityGroupIds": [
+            {
+              "Ref": "SecurityGroup"
+            }
+          ]
+        }
+      }
+    },
+    "Outputs": {
+      "memcachedInstance": {
+        "Description": "The Document Automation memcached Subnet Group Identifier",
+        "Value": {
+          "Ref": "memcachedInstance"
+        }
+      }
+    }
+  }
