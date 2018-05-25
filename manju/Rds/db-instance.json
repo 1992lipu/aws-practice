@@ -76,7 +76,7 @@
             "Properties" :
             {
                "GroupDescription" : "Security group for RDS DB Instance.",
-               "Vpc" : { "Ref" : "VpcId" }
+               "VpcId" : { "Ref" : "VpcId" }
             }
         },
     

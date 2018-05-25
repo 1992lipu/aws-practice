@@ -1,0 +1,86 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Cloudformation template for creating Redis Cache Cluster",
+    "Parameters": {
+      "NodeInstanceType": {
+        "Type": "String",
+        "Default": "cache.t2.small"
+      },
+      "SubnetGroup": {
+        "Type": "String",
+        "Default": "training-subnet-group"
+      },
+      "ClusterSize": {
+        "Type": "String",
+        "Default": "1"
+      },
+      "Port": {
+        "Type": "String",
+        "Default": "6379"
+      },
+      "VPC": {
+        "Type": "AWS::EC2::VPC::Id",
+        "Default": "vpc-63214318"
+      }
+    },
+    "Resources": {
+      "SecurityGroup": {
+        "Type": "AWS::EC2::SecurityGroup",
+        "Properties": {
+          "GroupDescription": "redis-security-group",
+          "VpcId": {
+            "Ref": "VPC"
+          },
+          "SecurityGroupIngress": [
+            {
+              "IpProtocol": "tcp",
+              "FromPort": {
+                "Ref": "Port"
+              },
+              "ToPort": {
+                "Ref": "Port"
+              },
+              "CidrIp": "0.0.0.0/0"
+            },
+            {
+              "CidrIp": "0.0.0.0/0",
+              "FromPort": "22",
+              "IpProtocol": "tcp",
+              "ToPort": "22"
+            }
+          ]
+        }
+      },
+    "RedisInstance": {
+        "Type": "AWS::ElastiCache::CacheCluster",
+        "Properties": {
+          "CacheNodeType": {
+            "Ref": "NodeInstanceType"
+          },
+          "CacheSubnetGroupName": {
+            "Ref": "SubnetGroup"
+          },
+          "Engine": "redis",
+          "NumCacheNodes": {
+            "Ref": "ClusterSize"
+          },
+          "Port": {
+            "Ref": "Port"
+          },
+          "VpcSecurityGroupIds": [
+            {
+              "Ref": "SecurityGroup"
+            }
+          ]
+        }
+      }
+    },
+    "Outputs": {
+      "RedisInstance": {
+        "Description": "The Document Automation Redis Subnet Group Identifier",
+        "Value": {
+          "Ref": "RedisInstance"
+        }
+      }
+    }
+  }
